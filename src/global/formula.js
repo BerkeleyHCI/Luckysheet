@@ -4194,7 +4194,7 @@ const luckysheetformula = {
         for (let i = 0; i < luckysheetfile.length; i++) {
             let file = luckysheetfile[i];
             let calcChain = file.calcChain;
-            
+
             /* 备注：再次加载表格获取的数据可能是JSON字符串格式(需要进行发序列化处理) */
             if(calcChain){
                 let tempCalcChain = [];
@@ -5879,21 +5879,23 @@ const luckysheetformula = {
             let isErr = false;
 
             if (getObjType(result[0]) != "array" && result.length == 2) {
+                console.log("error in line 5882")
                 isErr = valueIsError(result[0]);
             }
 
-            if (!isErr) {
-                if (getObjType(result[0]) == "array" && result.length == 1 && result[0].length == 1) {
-                    result = result[0][0];
-                }
-                else {
-                    dynamicArrayItem = { "r": r, "c": c, "f": txt, "index": index, "data": result };
-                    result = "";
-                }
-            }
-            else {
-                result = result[0];
-            }
+//commented out by Nidhi
+            // if (!isErr) {
+            //     if (getObjType(result[0]) == "array" && result.length == 1 && result[0].length == 1) {
+            //         result = result[0][0];
+            //     }
+            //     else {
+            //         dynamicArrayItem = { "r": r, "c": c, "f": txt, "index": index, "data": result };
+            //         result = "";
+            //     }
+            // }
+            // else {
+            //     result = result[0];
+            // }
         }
 
         window.luckysheetCurrentRow = null;
@@ -5942,4 +5944,5 @@ const luckysheetformula = {
     data_parm_index: 0  //选择公式后参数索引标记
 }
 
+window.execfunction = luckysheetformula.execfunction.bind(luckysheetformula)
 export default luckysheetformula;

@@ -21,6 +21,7 @@ import numeral from 'numeral';
 const functionImplementation = {
     "SUM": function() {
         //必要参数个数错误检测
+        alert("I'm in sum");
         if (arguments.length < this.m[0] || arguments.length > this.m[1]) {
             return formula.error.na;
         }
@@ -3336,7 +3337,7 @@ const functionImplementation = {
                         }
                         else{
                             if (typeof value !== 'string') {
-                                if (new Function("return " + value + criter)()) {  
+                                if (new Function("return " + value + criter)()) {
                                     matches++;
                                 }
                             }
@@ -26977,21 +26978,28 @@ const functionImplementation = {
 
             //布尔数组，其高度或宽度与数组相同
             var data_include = arguments[1];
+            //data_include is a list of arrays with either true or false in it [[true], [false]]
             var include = [];
             var type = "row"; //筛选方式 row - 行，col - 列
+
+            console.log("data_include var in func imp 26985");
+            console.log(data_include);
 
             if(getObjType(data_include) == "array"){
                 if(getObjType(data_include[0]) == "array"){
                     if(!func_methods.isDyadicArr(data_include)){
+                        console.log("error on line 26987 func imp");
                         return formula.error.v;
                     }
-
-                    if(data_include.length > 1 && data_include[0].length > 1){
-                        return formula.error.v;
-                    }
+//commented out by nidhi to see whether I can get multiple arrays for filter instead of just one column
+                    // if(data_include.length > 1 && data_include[0].length > 1){
+                    //     console.log("error on line 26991 func imp");
+                    //     return formula.error.v;
+                    // }
 
                     if(data_include.length > 1){
                         if(data_include.length != array.length){
+                          console.log("error on line 26998 func imp");
                             return formula.error.v;
                         }
 
@@ -27017,6 +27025,7 @@ const functionImplementation = {
                                 txt = txt == 0 ? false : true;
                             }
                             else{
+                                console.log("error on line 27024 func imp");
                                 return formula.error.v;
                             }
 
@@ -27188,10 +27197,17 @@ const functionImplementation = {
 
             //计算
             var result = [];
+            console.log("include var");
+            console.log(include);
+            console.log("array var:")
+            console.log(array);
             if(type == "row"){
                 for(var i = 0; i < array.length; i++){
                     if(include[i]){
-                        result.push(array[i]);
+                      //returning both row and value
+                        var newRet = [i, array[i]];
+                        //result.push(array[i]);
+                        result.push(newRet);
                     }
                 }
             }
