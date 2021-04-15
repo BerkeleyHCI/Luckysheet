@@ -5883,6 +5883,179 @@ const luckysheetformula = {
                 isErr = valueIsError(result[0]);
             }
 
+
+            if (!isErr) {
+                if (getObjType(result[0]) == "array" && result.length == 1 && result[0].length == 1) {
+                    result = result[0][0];
+                }
+                else {
+                    dynamicArrayItem = { "r": r, "c": c, "f": txt, "index": index, "data": result };
+                    result = "";
+                }
+            }
+            else {
+                result = result[0];
+            }
+        }
+
+        window.luckysheetCurrentRow = null;
+        window.luckysheetCurrentColumn = null;
+        window.luckysheetCurrentIndex = null;
+        window.luckysheetCurrentFunction = null;
+
+        if (r != null && c != null) {
+            if (isrefresh) {
+                _this.execFunctionGroup(r, c, result, index);
+            }
+
+            if (!notInsertFunc) {
+                _this.insertUpdateFunctionGroup(r, c, index);
+            }
+        }
+
+        if (!!sparklines) {
+            return [true, result, txt, { type: "sparklines", data: sparklines }];
+        }
+
+        if (!!dynamicArrayItem) {
+            return [true, result, txt, { type: "dynamicArrayItem", data: dynamicArrayItem }];
+        }
+
+        // console.log(result, txt);
+
+        return [true, result, txt];
+    },
+    testFunction: function (txt, fp) {
+        if (txt.substr(0, 1) == "=") {
+            return true;
+        }
+        else {
+            return false;
+        }
+    },
+    //new func added by nidhi
+    SBexecfunction: function (txt, r, c, index, isrefresh, notInsertFunc) {
+        let _this = this;
+
+        let _locale = locale();
+        let locale_formulaMore = _locale.formulaMore;
+        // console.log(txt,r,c)
+        if (txt.indexOf(_this.error.r) > -1) {
+            return [false, _this.error.r, txt];
+        }
+
+        if (!_this.checkBracketNum(txt)) {
+            txt += ")";
+        }
+
+        if (index == null) {
+            index = Store.currentSheetIndex;
+        }
+
+        Store.calculateSheetIndex = index;
+
+        let fp = $.trim(_this.functionParserExe(txt));
+        //console.log(fp)
+        if ((fp.substr(0, 20) == "luckysheet_function." || fp.substr(0, 22) == "luckysheet_compareWith")) {
+            _this.functionHTMLIndex = 0;
+        }
+
+        if (!_this.testFunction(txt, fp) || fp == "") {
+            tooltip.info("", locale_formulaMore.execfunctionError);
+            return [false, _this.error.n, txt];
+        }
+
+
+
+        let result = null;
+        window.luckysheetCurrentRow = r;
+        window.luckysheetCurrentColumn = c;
+        window.luckysheetCurrentIndex = index;
+        window.luckysheetCurrentFunction = txt;
+
+        let sparklines = null;
+
+        try {
+            if (fp.indexOf("luckysheet_getcelldata") > -1) {
+                let funcg = fp.split("luckysheet_getcelldata('");
+
+                for (let i = 1; i < funcg.length; i++) {
+                    let funcgStr = funcg[i].split("')")[0];
+                    let funcgRange = _this.getcellrange(funcgStr);
+
+                    if (funcgRange.row[0] < 0 || funcgRange.column[0] < 0) {
+                        return [true, _this.error.r, txt];
+                    }
+
+                    if (funcgRange.sheetIndex == Store.calculateSheetIndex && r >= funcgRange.row[0] && r <= funcgRange.row[1] && c >= funcgRange.column[0] && c <= funcgRange.column[1]) {
+                        if (isEditMode()) {
+                            alert(locale_formulaMore.execfunctionSelfError);
+                        }
+                        else {
+                            tooltip.info("", locale_formulaMore.execfunctionSelfErrorResult);
+
+                        }
+
+                        return [false, 0, txt];
+                    }
+                }
+            }
+
+            result = new Function("return " + fp)();
+            if (typeof (result) == "string") {//把之前的非打印控制字符DEL替换回一个双引号。
+                result = result.replace(/\x7F/g, '"');
+            }
+
+            //加入sparklines的参数项目
+            if (fp.indexOf("SPLINES") > -1) {
+                sparklines = result;
+                result = "";
+            }
+        }
+        catch (e) {
+            let err = e;
+            //err错误提示处理
+            console.log(e, fp);
+            err = _this.errorInfo(err);
+            result = [_this.error.n, err];
+        }
+
+        //公式结果是对象，则表示只是选区。如果是单个单元格，则返回其值；如果是多个单元格，则返回 #VALUE!。
+        if (getObjType(result) == "object" && result.startCell != null) {
+            if (getObjType(result.data) == "array") {
+                result = _this.error.v;
+            }
+            else {
+                if (getObjType(result.data) == "object" && !isRealNull(result.data.v)) {
+                    result = result.data.v;
+                }
+                else if (!isRealNull(result.data)) {
+                    //只有data长或宽大于1才可能是选区
+                    if (result.cell > 1 || result.rowl > 1) {
+                        result = result.data;
+                    }
+                    else//否则就是单个不为null的没有值v的单元格
+                    {
+                        result = 0;
+                    }
+                }
+                else {
+                    result = 0;
+                }
+            }
+        }
+
+        //公式结果是数组，分错误值 和 动态数组 两种情况
+        let dynamicArrayItem = null;
+
+        if (getObjType(result) == "array") {
+            let isErr = false;
+
+            if (getObjType(result[0]) != "array" && result.length == 2) {
+                console.log("error in line 5882")
+                isErr = valueIsError(result[0]);
+            }
+
 //commented out by Nidhi
             // if (!isErr) {
             //     if (getObjType(result[0]) == "array" && result.length == 1 && result[0].length == 1) {
@@ -5925,14 +6098,6 @@ const luckysheetformula = {
 
         return [true, result, txt];
     },
-    testFunction: function (txt, fp) {
-        if (txt.substr(0, 1) == "=") {
-            return true;
-        }
-        else {
-            return false;
-        }
-    },
     //供function/functionImplementation.js的EVALUATE函数调用。
     execstringformula: function (txt, r, c, index) {
         let _this = this;
@@ -5944,5 +6109,5 @@ const luckysheetformula = {
     data_parm_index: 0  //选择公式后参数索引标记
 }
 
-window.execfunction = luckysheetformula.execfunction.bind(luckysheetformula)
+window.execfunction = luckysheetformula.SBexecfunction.bind(luckysheetformula)
 export default luckysheetformula;

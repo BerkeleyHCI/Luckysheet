@@ -26992,10 +26992,10 @@ const functionImplementation = {
                         return formula.error.v;
                     }
 //commented out by nidhi to see whether I can get multiple arrays for filter instead of just one column
-                    // if(data_include.length > 1 && data_include[0].length > 1){
-                    //     console.log("error on line 26991 func imp");
-                    //     return formula.error.v;
-                    // }
+                    if(data_include.length > 1 && data_include[0].length > 1){
+                        console.log("error on line 26991 func imp");
+                        return formula.error.v;
+                    }
 
                     if(data_include.length > 1){
                         if(data_include.length != array.length){
@@ -27196,16 +27196,17 @@ const functionImplementation = {
             }
 
             //计算
+            //Nidhi edited
             var result = [];
-            console.log("include var");
-            console.log(include);
-            console.log("array var:")
+            console.log("array var:");
             console.log(array);
             if(type == "row"){
                 for(var i = 0; i < array.length; i++){
                     if(include[i]){
                       //returning both row and value
-                        var newRet = [i, array[i]];
+                      var newRet = array[i];
+                      newRet.lineNumber = i;
+                        //var newRet = [i, array[i]];
                         //result.push(array[i]);
                         result.push(newRet);
                     }
